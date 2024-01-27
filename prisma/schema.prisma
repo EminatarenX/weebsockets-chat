@@ -6,13 +6,15 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 model User {
   id String @id @default(uuid())
   name String @unique
+  connected Boolean @default(false)
+  socketId String?
   messages Message[]
   chats Chat[]
   posts Post[]

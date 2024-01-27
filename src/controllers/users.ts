@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { Request, Response } from 'express'
+import { User } from "../adapters/UserWebSocketAdapter";
 const prisma = new PrismaClient();
 
 export const login = async ( req: Request, res: Response ) => {
@@ -179,4 +180,94 @@ export const newMessage = async (req: Request, res: Response) => {
         console.log(error)
     }
 
+}
+
+
+
+export const checkOnline = async (req: Request, res: Response) => {
+    const { id } = req.user;
+    const users = await prisma.user.findMany({
+        where: {
+            connected: true,
+            chats: {
+                some: {
+                    users: {
+                        some: {
+                            id
+                        }
+                    }
+                }
+            }
+        }
+    })
+
+    res.json({users})
+}
+
+export const userConnected = async (user: User) => {
+    try {
+        await prisma.user.update({
+            where: {
+                id: user.id
+            },
+            data: {
+                connected: true,
+                socketId: user.socketId
+            }
+        })
+
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+export const userDisconnected = async (socketId: string) => {
+    try {
+        const findUser = await prisma.user.findFirst({
+            where: {
+                socketId
+            }
+        })
+
+        if(findUser) {
+            await prisma.user.update({
+                where: {
+                    id: findUser.id
+                },
+                data: {
+                    connected: false,
+                    socketId: null
+                }
+            })
+        }
+
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+export const newChatSocket = async (chat: any) => {
+    const chatId = chat.chat.id
+    const userId = chat.user
+    const newChat = await prisma.chat.findUnique({
+        where: {
+            id: chatId
+        },
+        include: {
+            messages: {
+                include: {
+                    user: true
+                },
+                orderBy: {
+                    createdAt: 'asc'
+                }
+            },
+            users: true
+        }
+    })
+
+    const toUser = newChat?.users.find(user => user.id !== userId)
+
+    return {newChat, toUser}
+    
 }
