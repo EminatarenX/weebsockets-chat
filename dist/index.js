@@ -4,8 +4,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const ws_1 = __importDefault(require("ws"));
+const socket_io_1 = require("socket.io");
 const users_1 = __importDefault(require("./src/routes/users"));
+const UserWebSocketAdapter_1 = require("./src/adapters/UserWebSocketAdapter");
 const cors_1 = require("./src/config/cors");
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
@@ -14,10 +15,11 @@ app.use('/users', users_1.default);
 const server = app.listen(4000, () => {
     console.log(`Server started on port 4000 :)`);
 });
-const wss = new ws_1.default.Server({ server });
-wss.on('connection', (ws) => {
-    ws.on('message', (message) => {
-        console.log('Received: %s', message);
-    });
-    ws.send('Hi there, I am a WebSocket server');
+const io = new socket_io_1.Server(server, {
+    pingTimeout: 60000,
+    cors: {
+        origin: '*',
+    }
 });
+const userWebsocketAdapter = new UserWebSocketAdapter_1.UserWebSocketAdapter(io);
+userWebsocketAdapter.handleEvents();

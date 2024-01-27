@@ -7,5 +7,8 @@ const userRoutes = (0, express_1.Router)();
 userRoutes.post('/login', users_1.login);
 userRoutes.post('/send', checkAuth_1.checkAuth, users_1.sendMessage);
 userRoutes.get('/chats', checkAuth_1.checkAuth, users_1.getChats);
+userRoutes.get('/chat/:id', checkAuth_1.checkAuth, users_1.findOrCreateChat);
 userRoutes.get('/search/:name', users_1.searchUser);
+userRoutes.post('/messages/send', checkAuth_1.checkAuth, users_1.sendMessage);
+userRoutes.get('/online', checkAuth_1.checkAuth, users_1.checkOnline);
 exports.default = userRoutes;
